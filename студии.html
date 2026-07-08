@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дизайн студий</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --transition: cubic-bezier(0.22, 0.12, 0.15, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Playfair Display', 'Georgia', serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            cursor: none;
+            user-select: none;
+            scroll-behavior: smooth;
+        }
+
+        /* ============ ПЯТНА ПОВЕРХ ВСЕГО ============ */
+        .light-spot {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            border-radius: 50%;
+            filter: blur(50px);
+            mix-blend-mode: screen;
+            transition: background 2.5s ease;
+        }
+
+        /* ============ КУРСОР ============ */
+        .cursor-dot {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #fff;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            transition: width 0.25s, height 0.25s;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
+        }
+        .cursor-ring {
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            transition: width 0.35s, height 0.35s, border-color 0.35s;
+        }
+
+        /* ============ ПРОГРЕСС-БАР ============ */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.5);
+            z-index: 1000;
+            pointer-events: none;
+            transition: width 0.15s linear;
+        }
+
+        /* ============ БОКОВАЯ НАВИГАЦИЯ ============ */
+        .side-nav {
+            position: fixed;
+            right: 28px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            opacity: 0;
+            transition: opacity 0.6s var(--transition);
+        }
+        .side-nav.visible { opacity: 1; }
+        .side-nav .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.5s var(--transition);
+        }
+        .side-nav .dot:hover,
+        .side-nav .dot.active {
+            background: #fff;
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.5);
+            transform: scale(1.5);
+            border-color: #fff;
+        }
+        .side-nav .dot .tooltip {
+            position: absolute;
+            right: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #fff;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            font-weight: 400;
+        }
+        .side-nav .dot:hover .tooltip { opacity: 0.85; }
+
+        /* ============ СЕКЦИЯ ============ */
+        .studio-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 8vh 5vw;
+            z-index: 1;
+            transition: background 1.2s var(--transition);
+        }
+        .studio-inner {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(1.5rem, 5vh, 3.5rem);
+        }
+
+        /* ============ ГЛАВНОЕ ФОТО ============ */
+        .hero-image-wrapper {
+            width: 100%;
+            aspect-ratio: 16/9;
+            max-height: 62vh;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #111;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1s var(--transition), transform 1s var(--transition), box-shadow 0.7s var(--transition);
+            box-shadow: 0 50px 100px -25px rgba(0, 0, 0, 0.5);
+        }
+        .hero-image-wrapper.revealed { opacity: 1; transform: translateY(0); }
+        .hero-image-wrapper:hover {
+            box-shadow: 0 60px 140px -20px var(--glow-color, rgba(255, 255, 255, 0.2));
+        }
+        .hero-image { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.9s var(--transition); }
+        .hero-image-wrapper:hover .hero-image { transform: scale(1.04); }
+
+        /* ============ ИНФО ============ */
+        .studio-info-row {
+            display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+            opacity: 0; transform: translateY(30px);
+            transition: opacity 0.8s var(--transition) 0.2s, transform 0.8s var(--transition) 0.2s;
+        }
+        .studio-info-row.revealed { opacity: 1; transform: translateY(0); }
+        .studio-number { font-size: 0.85rem; letter-spacing: 0.5em; text-transform: uppercase; color: rgba(255,255,255,0.45); font-weight: 400; }
+        .studio-color-name {
+            font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 400; letter-spacing: 0.02em; line-height: 1;
+            color: #fff; font-style: italic; cursor: default;
+            transition: color 0.6s var(--transition), text-shadow 0.6s var(--transition);
+        }
+        .studio-color-name:hover {
+            color: var(--hover-color, #fff);
+            text-shadow: 0 0 50px var(--hover-color, rgba(255,255,255,0.7));
+        }
+
+        /* ============ ГАЛЕРЕЯ ============ */
+        .gallery-wrapper {
+            opacity: 0; transform: translateY(30px);
+            transition: opacity 0.8s var(--transition) 0.35s, transform 0.8s var(--transition) 0.35s;
+        }
+        .gallery-wrapper.revealed { opacity: 1; transform: translateY(0); }
+        .gallery-label { font-size: 0.8rem; letter-spacing: 0.5em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 1.2rem; font-weight: 400; }
+        .gallery-scroll { display: flex; gap: 14px; overflow-x: auto; scroll-behavior: smooth; padding: 8px 4px; scrollbar-width: none; }
+        .gallery-scroll::-webkit-scrollbar { display: none; }
+
+        .gallery-thumb {
+            flex: 0 0 clamp(170px, 20vw, 260px); aspect-ratio: 4/3; border-radius: 10px;
+            overflow: visible; background: transparent; cursor: pointer;
+            transition: transform 0.45s var(--transition); position: relative;
+        }
+        .gallery-thumb::after {
+            content: ''; position: absolute; inset: 0; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); pointer-events: none;
+            transition: border-color 0.4s; z-index: 2;
+        }
+        .gallery-thumb:hover::after { border-color: rgba(255,255,255,0.4); }
+        .gallery-thumb:hover { transform: translateY(-6px); }
+        .gallery-thumb .img-inner { width: 100%; height: 100%; border-radius: 10px; overflow: hidden; background: #0f0f0f; }
+        .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s var(--transition); }
+        .gallery-thumb:hover img { transform: scale(1.06); }
+
+        /* ============ ЛАЙТБОКС ============ */
+        .lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 20000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.45s var(--transition); cursor: pointer;
+        }
+        .lightbox.active { opacity: 1; pointer-events: auto; }
+        .lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 6px; transform: scale(0.92); transition: transform 0.45s var(--transition); }
+        .lightbox.active img { transform: scale(1); }
+        .lightbox-close { position: absolute; top: 24px; right: 28px; font-size: 2.2rem; color: #fff; cursor: pointer; opacity: 0.5; transition: opacity 0.3s; font-weight: 300; line-height: 1; }
+        .lightbox-close:hover { opacity: 1; }
+
+        /* ============ ПОДВАЛ ============ */
+        .footer { text-align: center; padding: 8rem 2rem; color: rgba(255,255,255,0.18); font-size: 0.85rem; letter-spacing: 0.4em; font-weight: 400; position: relative; z-index: 1; }
+
+        @media (max-width: 768px) {
+            .studio-section { padding: 6vh 4vw; }
+            .hero-image-wrapper { border-radius: 8px; }
+            .side-nav { right: 8px; gap: 10px; }
+            .side-nav .dot { width: 8px; height: 8px; }
+            .gallery-thumb { flex: 0 0 55vw; }
+            .cursor-dot, .cursor-ring { display: none; }
+            body { cursor: auto; }
+            .light-spot { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cursor-dot" id="cursorDot"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+    <div class="progress-bar" id="progressBar"></div>
+    <nav class="side-nav" id="sideNav"></nav>
+
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img src="" alt="" id="lightboxImg">
+    </div>
+
+    <script>
+        const studios = [
+            { color: 'Графитовый', bg: '#111111', hoverColor: '#b0b0b0', thumbs: 5, glow: 'rgba(176,176,176,0.15)', spotColor: 'rgba(176,176,176,0.35)' },
+            { color: 'Кремово-бежевый', bg: '#1a1816', hoverColor: '#d4b896', thumbs: 5, glow: 'rgba(212,184,150,0.2)', spotColor: 'rgba(212,184,150,0.4)' },
+            { color: 'Капучино', bg: '#161311', hoverColor: '#b89478', thumbs: 5, glow: 'rgba(184,148,120,0.2)', spotColor: 'rgba(184,148,120,0.4)' },
+            { color: 'Сливовый', bg: '#141018', hoverColor: '#9a68b0', thumbs: 6, glow: 'rgba(154,104,176,0.2)', spotColor: 'rgba(154,104,176,0.4)' },
+            { color: 'Мраморный', bg: '#181818', hoverColor: '#d0d0d0', thumbs: 5, glow: 'rgba(208,208,208,0.18)', spotColor: 'rgba(208,208,208,0.38)' },
+            { color: 'Антрацитовый', bg: '#0e0e0e', hoverColor: '#999999', thumbs: 5, glow: 'rgba(153,153,153,0.15)', spotColor: 'rgba(153,153,153,0.35)' },
+            { color: 'Французский лён', bg: '#1a1815', hoverColor: '#c4b8a8', thumbs: 5, glow: 'rgba(196,184,168,0.2)', spotColor: 'rgba(196,184,168,0.4)' },
+            { color: 'Небесно-голубой', bg: '#0f1418', hoverColor: '#7ba7c9', thumbs: 5, glow: 'rgba(123,167,201,0.2)', spotColor: 'rgba(123,167,201,0.4)' },
+            { color: 'Шафрановый', bg: '#1a160e', hoverColor: '#d4a832', thumbs: 5, glow: 'rgba(212,168,50,0.2)', spotColor: 'rgba(212,168,50,0.4)' },
+            { color: 'Зелёно-охровый', bg: '#14130e', hoverColor: '#a89040', thumbs: 6, glow: 'rgba(168,144,64,0.2)', spotColor: 'rgba(168,144,64,0.4)' },
+            { color: 'Серо-персиковый', bg: '#1a1614', hoverColor: '#c89880', thumbs: 5, glow: 'rgba(200,152,128,0.2)', spotColor: 'rgba(200,152,128,0.4)' },
+            { color: 'Мятный', bg: '#0d1412', hoverColor: '#7ab8a2', thumbs: 5, glow: 'rgba(122,184,162,0.2)', spotColor: 'rgba(122,184,162,0.4)' },
+            { color: 'Глубокий изумрудный', bg: '#0d1411', hoverColor: '#3d8a6e', thumbs: 5, glow: 'rgba(61,138,110,0.2)', spotColor: 'rgba(61,138,110,0.4)' },
+            { color: 'Шоколадный', bg: '#15100d', hoverColor: '#8b5e3c', thumbs: 6, glow: 'rgba(139,94,60,0.2)', spotColor: 'rgba(139,94,60,0.4)' },
+            { color: 'Фламинго', bg: '#1a1416', hoverColor: '#e890a0', thumbs: 5, glow: 'rgba(232,144,160,0.2)', spotColor: 'rgba(232,144,160,0.4)' },
+        ];
+    </script>
+
+    <script>
+        const sideNav = document.getElementById('sideNav');
+        const body = document.body;
+
+        studios.forEach((studio, index) => {
+            const num = String(index + 1).padStart(2, '0');
+            const section = document.createElement('section');
+            section.className = 'studio-section';
+            section.id = `studio-${index}`;
+            section.style.background = `radial-gradient(ellipse at 50% 30%, ${studio.bg} 0%, #000 70%)`;
+            section.style.setProperty('--glow-color', studio.glow);
+            section.style.setProperty('--hover-color', studio.hoverColor);
+
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.innerHTML = `<span class="tooltip">${studio.color}</span>`;
+            dot.addEventListener('click', () => document.getElementById(`studio-${index}`).scrollIntoView({ behavior: 'smooth' }));
+            sideNav.appendChild(dot);
+
+            let heroHTML = `<img src="студия${index + 1}-главное.jpg" class="hero-image" alt="Дизайн ${num}">`;
+
+            let thumbsHTML = '';
+            for (let t = 1; t <= studio.thumbs; t++) {
+                thumbsHTML += `<div class="gallery-thumb"><div class="img-inner"><img src="студия${index + 1}-${t + 1}.jpg" alt="Фото ${t + 1}"></div></div>`;
+            }
+
+            section.innerHTML = `
+                <div class="studio-inner">
+                    <div class="hero-image-wrapper">${heroHTML}</div>
+                    <div class="studio-info-row">
+                        <span class="studio-number">Дизайн ${num}</span>
+                        <h2 class="studio-color-name">${studio.color}</h2>
+                    </div>
+                    <div class="gallery-wrapper">
+                        <p class="gallery-label">Галерея</p>
+                        <div class="gallery-scroll">${thumbsHTML}</div>
+                    </div>
+                </div>`;
+            body.appendChild(section);
+        });
+
+        const footer = document.createElement('footer');
+        footer.className = 'footer';
+        footer.textContent = 'ДИЗАЙН СТУДИЙ · 2026';
+        body.appendChild(footer);
+    </script>
+
+    <script>
+        const spots = [];
+        const spotCount = 10;
+
+        for (let i = 0; i < spotCount; i++) {
+            const spot = document.createElement('div');
+            spot.className = 'light-spot';
+            const size = 120 + Math.random() * 180;
+            spot.style.width = size + 'px';
+            spot.style.height = size + 'px';
+            spot.style.left = Math.random() * 85 + '%';
+            spot.style.top = Math.random() * 85 + '%';
+            spot.style.opacity = 0.25 + Math.random() * 0.35;
+            spot.style.background = 'rgba(176,176,176,0.35)';
+            document.body.appendChild(spot);
+
+            spots.push({
+                el: spot,
+                x: parseFloat(spot.style.left),
+                y: parseFloat(spot.style.top),
+                vx: (Math.random() - 0.5) * 0.03,
+                vy: (Math.random() - 0.5) * 0.03,
+                phase: Math.random() * Math.PI * 2,
+                speed: 0.15 + Math.random() * 0.25,
+            });
+        }
+
+        let currentSpotColor = 'rgba(176,176,176,0.35)';
+
+        const studioSections = document.querySelectorAll('.studio-section');
+        const progressBar = document.getElementById('progressBar');
+
+        window.addEventListener('scroll', () => {
+            const h = document.documentElement.scrollHeight - window.innerHeight;
+            progressBar.style.width = h > 0 ? (window.scrollY / h * 100) + '%' : '0%';
+        });
+
+        function reveal() {
+            studioSections.forEach((sec, i) => {
+                const rect = sec.getBoundingClientRect();
+                if (rect.top < window.innerHeight * 0.8 && rect.bottom > 0) {
+                    sec.querySelector('.hero-image-wrapper')?.classList.add('revealed');
+                    sec.querySelector('.studio-info-row')?.classList.add('revealed');
+                    sec.querySelector('.gallery-wrapper')?.classList.add('revealed');
+                    document.querySelectorAll('.side-nav .dot').forEach((d, di) => d.classList.toggle('active', di === i));
+                    currentSpotColor = studios[i].spotColor;
+                    spots.forEach(s => { s.el.style.background = currentSpotColor; });
+                }
+            });
+        }
+        window.addEventListener('scroll', reveal);
+        reveal();
+
+        function animateSpots(time) {
+            spots.forEach(s => {
+                s.x += s.vx;
+                s.y += s.vy;
+                if (s.x < -15) s.x = 115;
+                if (s.x > 115) s.x = -15;
+                if (s.y < -15) s.y = 115;
+                if (s.y > 115) s.y = -15;
+
+                const breathe = Math.sin(time * 0.0004 * s.speed + s.phase) * 0.15 + 0.85;
+                s.el.style.left = s.x + '%';
+                s.el.style.top = s.y + '%';
+                s.el.style.opacity = (0.25 + s.phase % 0.1) * breathe;
+            });
+            requestAnimationFrame(animateSpots);
+        }
+        requestAnimationFrame(animateSpots);
+
+        const sideNavEl = document.getElementById('sideNav');
+        let navTimeout;
+        function showNav() {
+            sideNavEl.classList.add('visible');
+            clearTimeout(navTimeout);
+            navTimeout = setTimeout(() => sideNavEl.classList.remove('visible'), 3500);
+        }
+        window.addEventListener('scroll', showNav);
+        document.addEventListener('mousemove', e => { if (e.clientX > window.innerWidth - 60) showNav(); });
+        document.addEventListener('touchmove', showNav);
+        showNav();
+
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        document.addEventListener('click', e => {
+            const img = e.target.closest('.hero-image, .gallery-thumb img');
+            if (img) { lightboxImg.src = img.src; lightbox.classList.add('active'); document.body.style.overflow = 'hidden'; }
+            if ((e.target.closest('.lightbox') && !e.target.closest('img')) || e.target.closest('.lightbox-close')) {
+                lightbox.classList.remove('active'); document.body.style.overflow = '';
+            }
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { lightbox.classList.remove('active'); document.body.style.overflow = ''; }
+        });
+
+        const dot = document.getElementById('cursorDot');
+        const ring = document.getElementById('cursorRing');
+        let mx = 0, my = 0, dx = 0, dy = 0, rx = 0, ry = 0;
+        document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        function cursorLoop() {
+            dx += (mx - dx) * 0.35; dy += (my - dy) * 0.35;
+            rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+            dot.style.left = dx + 'px'; dot.style.top = dy + 'px';
+            ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+            requestAnimationFrame(cursorLoop);
+        }
+        cursorLoop();
+        document.addEventListener('mouseover', e => {
+            if (e.target.closest('.hero-image-wrapper, .gallery-thumb, .studio-color-name')) {
+                ring.style.width = '55px'; ring.style.height = '55px'; ring.style.borderColor = 'rgba(255,255,255,0.7)';
+                dot.style.width = '10px'; dot.style.height = '10px';
+            }
+        });
+        document.addEventListener('mouseout', e => {
+            if (e.target.closest('.hero-image-wrapper, .gallery-thumb, .studio-color-name')) {
+                ring.style.width = '36px'; ring.style.height = '36px'; ring.style.borderColor = 'rgba(255,255,255,0.4)';
+                dot.style.width = '6px'; dot.style.height = '6px';
+            }
+        });
+    </script>
+
+</body>
+</html>
